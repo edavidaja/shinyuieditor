@@ -25,6 +25,7 @@ export function RadioInputs<OptionType extends string>({
       </label>
       <fieldset
         id={name}
+        className={classes.optionsHolder}
         style={{
           gridTemplateColumns: `repeat(${
             optionsPerColumn ?? "auto-fill"

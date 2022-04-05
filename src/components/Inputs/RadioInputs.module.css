@@ -1,4 +1,4 @@
-fieldset {
+.optionsHolder {
   display: grid;
   gap: 5px;
   justify-content: space-around;
