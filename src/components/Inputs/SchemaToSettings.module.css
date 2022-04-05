@@ -1,0 +1,16 @@
+.container {
+  /* outline: 1px solid salmon; */
+}
+
+.container fieldset {
+  padding: 0;
+  border: none;
+}
+
+.container fieldset > div {
+  margin-block-end: 15px;
+}
+
+.container button[type="submit"] {
+  margin-inline: auto;
+}

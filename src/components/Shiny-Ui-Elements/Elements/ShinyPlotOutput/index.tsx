@@ -1,4 +1,5 @@
 import plotIcon from "assets/icons/shinyPlot.png";
+import { CSSUnitInput } from "components/Inputs/CSSUnitInput";
 
 import type { UiComponentInfo } from "../uiNodeTypes";
 
@@ -21,6 +22,12 @@ export const shinyPlotOutputInfo: UiComponentInfo<ShinyPlotOutputProps> = {
       title: "New OutputID",
       default: "myPlot",
     },
+    width: {
+      type: "string",
+      title: "Width",
+      default: "100px",
+      widget: CustomWidth,
+    },
   },
   acceptsChildren: false,
   defaultSettings: { outputId: "plot" },
@@ -28,3 +35,15 @@ export const shinyPlotOutputInfo: UiComponentInfo<ShinyPlotOutputProps> = {
 };
 
 export default ShinyPlotOutput;
+
+function CustomWidth(props: any) {
+  console.log("Custom Widget Props", props);
+
+  return (
+    <CSSUnitInput
+      value={props.value}
+      onChange={props.onChange}
+      units={["px", "auto"]}
+    />
+  );
+}

@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import type { UiNodeSettingsOptions } from "components/Inputs/ArgumentsToForm";
-import ArgumentsToForm from "components/Inputs/ArgumentsToForm";
 import Button from "components/Inputs/Button";
+import type { UiNodeSettingsOptions } from "components/Inputs/SchemaToSettings";
+import SchemaToSettings from "components/Inputs/SchemaToSettings";
 import type {
   SettingsUpdaterComponent,
   ShinyUiNode,
@@ -89,7 +89,6 @@ function useUpdateSettings({ tree }: { tree: ShinyUiNode }) {
   );
 
   const updateArguments = (newArguments: typeof tree.uiArguments) => {
-    console.log("Updating arguments", newArguments);
     setCurrentNode({
       ...currentNode,
       uiArguments: newArguments,
@@ -159,7 +158,7 @@ export function SettingsPanel({ tree }: { tree: ShinyUiNode }) {
       </div>
       <div className={classes.settingsForm}>
         {settingsSchema ? (
-          <ArgumentsToForm
+          <SchemaToSettings
             settings={uiArguments}
             inputArgs={settingsSchema}
             onChange={updateArguments}

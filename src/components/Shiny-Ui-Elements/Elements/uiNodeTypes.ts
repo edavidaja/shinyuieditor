@@ -3,7 +3,7 @@ import type React from "react";
 import type {
   nameValuePair,
   UiNodeSettingsOptions,
-} from "components/Inputs/ArgumentsToForm";
+} from "components/Inputs/SchemaToSettings";
 import type { DeleteAction, UpdateAction } from "state/uiTree";
 
 import { gridlayoutGridPageInfo } from "./GridlayoutGridPage";

@@ -2,8 +2,10 @@ import type { UiSchema } from "@rjsf/core";
 import JSONForm from "@rjsf/core";
 import type { JSONSchema7 } from "json-schema";
 import omit from "just-omit";
+import { BiCheck } from "react-icons/bi";
 
-import { CSSUnitInput } from "./CSSUnitInput";
+import Button from "./Button";
+import classes from "./SchemaToSettings.module.css";
 
 const log = (msg: string) => (x: any) => console.log(msg, x);
 
@@ -24,7 +26,7 @@ export type UiNodeSettingsOptions<NodeSettings extends nameValuePair> = {
   [name in keyof NodeSettings]: argumentSchema<NodeSettings[name]>;
 };
 
-export default function ArgumentsToForm<NodeSettings extends nameValuePair>({
+export default function SchemaToSettings<NodeSettings extends nameValuePair>({
   settings,
   inputArgs,
   onChange,
@@ -35,44 +37,35 @@ export default function ArgumentsToForm<NodeSettings extends nameValuePair>({
   onChange: (newSettings: NodeSettings) => void;
   onSubmit: () => void;
 }) {
-  const formSchemas = inputArgsToSchemas(inputArgs);
+  const formSchemas = inputArgsToSchemas(inputArgs, settings);
 
   const schema: JSONSchema7 = {
-    title: "Standin Name",
     type: "object",
     properties: formSchemas.schema,
   };
 
   return (
     <JSONForm
+      className={classes.container}
       formData={settings}
       schema={schema}
       uiSchema={formSchemas.uiSchema}
       onChange={(form) => {
-        console.log("Form changed", form.formData);
-        // debugger;
         onChange({ ...form.formData } as NodeSettings);
       }}
       onSubmit={() => onSubmit()}
       onError={log("errors")}
-    />
-  );
-}
-
-function CustomWidth(props: any) {
-  const value = "100px";
-
-  return (
-    <CSSUnitInput
-      value={value}
-      onChange={props.onChange}
-      units={["px", "auto"]}
-    />
+    >
+      <Button type="submit">
+        <BiCheck /> Update
+      </Button>
+    </JSONForm>
   );
 }
 
 function inputArgsToSchemas<NodeSettings extends nameValuePair>(
-  inputsArgs: UiNodeSettingsOptions<NodeSettings>
+  inputsArgs: UiNodeSettingsOptions<NodeSettings>,
+  settings: nameValuePair
 ): {
   schema: Record<string, JSONSchema7>;
   uiSchema: UiSchema;
@@ -86,9 +79,14 @@ function inputArgsToSchemas<NodeSettings extends nameValuePair>(
     if (widget) {
       uiSchema[argName] = { "ui:widget": widget };
     }
-    schema[argName] = omit(arg, ["widget"]) as argumentSchema<
+
+    const mainSchema = omit(arg, ["widget"]) as argumentSchema<
       typeof arg["default"]
     >;
+    if (settings[argName]) {
+      mainSchema.default = settings[argName] as typeof arg["default"];
+    }
+    schema[argName] = mainSchema;
   }
 
   return { schema, uiSchema };
