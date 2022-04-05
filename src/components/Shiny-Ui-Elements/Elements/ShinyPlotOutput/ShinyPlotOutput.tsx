@@ -20,21 +20,21 @@ const ShinyPlotOutput: UiNodeComponent<ShinyPlotOutputProps> = ({
   } = uiArguments;
 
   // Start tiny so icon isn't the reason the container is big
-  const [graphSize, setGraphSize] = React.useState(2);
-  React.useEffect(() => {
-    // Use conditionals here because in tests we dont have access to the
-    // ResizeObserver variable
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver((entries) => {
-      if (!compRef.current) return;
+  const [graphSize, setGraphSize] = React.useState(10);
+  // React.useEffect(() => {
+  //   // Use conditionals here because in tests we dont have access to the
+  //   // ResizeObserver variable
+  //   if (typeof ResizeObserver === "undefined") return;
+  //   const ro = new ResizeObserver((entries) => {
+  //     if (!compRef.current) return;
 
-      const { offsetHeight, offsetWidth } = compRef.current;
-      setGraphSize(Math.min(offsetHeight, offsetWidth) * 0.9);
-    });
+  //     const { offsetHeight, offsetWidth } = compRef.current;
+  //     setGraphSize(Math.min(offsetHeight, offsetWidth) * 0.9);
+  //   });
 
-    if (compRef.current) ro.observe(compRef.current);
-    return () => ro.disconnect();
-  }, [compRef]);
+  //   if (compRef.current) ro.observe(compRef.current);
+  //   return () => ro.disconnect();
+  // }, [compRef]);
 
   return (
     <div
@@ -46,7 +46,7 @@ const ShinyPlotOutput: UiNodeComponent<ShinyPlotOutputProps> = ({
     >
       <GoGraph
         // Account for padding of 1 rem
-        size={`calc(${graphSize}px - 2rem)`}
+        // size={`calc(${graphSize}px - 2rem)`}
         style={{
           gridArea: "1/1",
           placeSelf: "center",

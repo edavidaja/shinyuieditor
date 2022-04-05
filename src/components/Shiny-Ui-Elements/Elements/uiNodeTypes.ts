@@ -1,5 +1,9 @@
 import type React from "react";
 
+import type {
+  nameValuePair,
+  UiNodeSettingsOptions,
+} from "components/Inputs/ArgumentsToForm";
 import type { DeleteAction, UpdateAction } from "state/uiTree";
 
 import { gridlayoutGridPageInfo } from "./GridlayoutGridPage";
@@ -15,7 +19,7 @@ import { shinyUiOutputInfo } from "./ShinyUiOutput";
 /**
  * Defines everything needed to add a new Shiny UI component to the app
  */
-export type UiComponentInfo<NodeSettings extends object> = {
+export type UiComponentInfo<NodeSettings extends nameValuePair> = {
   /**
    * The name of the component in plain language. E.g. Plot Output
    */
@@ -24,6 +28,7 @@ export type UiComponentInfo<NodeSettings extends object> = {
    * Component for rendering the settings/ arguments form
    */
   SettingsComponent: SettingsUpdaterComponent<NodeSettings>;
+  SettingsSchema?: UiNodeSettingsOptions<NodeSettings>;
   /**
    * The settings that a freshly initialized node will take. These will also be
    * used to fill in any missing arguments if they are provided.
@@ -131,22 +136,23 @@ type NodeInfo = {
   path: NodePath;
 };
 
-export type UiNodeComponent<NodeSettings extends object> = React.FC<{
+export type UiNodeComponent<NodeSettings extends nameValuePair> = React.FC<{
   uiArguments: NodeSettings;
   nodeInfo: NodeInfo;
   eventHandlers: Pick<BaseElementProps, "onClick">;
   compRef: React.RefObject<HTMLDivElement>;
 }>;
 
-export type UiContainerNodeComponent<NodeSettings extends object> = React.FC<{
-  uiArguments: NodeSettings;
-  uiChildren: ShinyUiChildren;
-  nodeInfo: NodeInfo;
-  compRef: React.RefObject<HTMLDivElement>;
-  eventHandlers: Pick<BaseElementProps, "onClick">;
-}>;
+export type UiContainerNodeComponent<NodeSettings extends nameValuePair> =
+  React.FC<{
+    uiArguments: NodeSettings;
+    uiChildren: ShinyUiChildren;
+    nodeInfo: NodeInfo;
+    compRef: React.RefObject<HTMLDivElement>;
+    eventHandlers: Pick<BaseElementProps, "onClick">;
+  }>;
 
-export type SettingsUpdaterComponent<T extends object> = (p: {
+export type SettingsUpdaterComponent<T extends nameValuePair> = (p: {
   settings: T;
   onChange: (newSettings: T) => void;
 }) => JSX.Element;

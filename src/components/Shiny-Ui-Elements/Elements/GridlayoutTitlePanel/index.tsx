@@ -5,10 +5,10 @@ import type { UiComponentInfo } from "../uiNodeTypes";
 import GridlayoutTitlePanel from "./GridlayoutTitlePanel";
 import { GridlayoutTitlePanelSettings } from "./SettingsPanel";
 
-export interface GridlayoutTitlePanelProps {
+export type GridlayoutTitlePanelProps = {
   title: string;
   area?: string;
-}
+};
 
 export const gridlayoutTitlePanelInfo: UiComponentInfo<GridlayoutTitlePanelProps> =
   {

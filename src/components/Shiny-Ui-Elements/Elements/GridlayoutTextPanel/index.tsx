@@ -5,11 +5,11 @@ import type { UiComponentInfo } from "../uiNodeTypes";
 import GridlayoutTextPanel from "./GridlayoutTextPanel";
 import { GridlayoutTextPanelSettings } from "./SettingsPanel";
 
-export interface GridlayoutTextPanelProps {
+export type GridlayoutTextPanelProps = {
   content: string;
   h_align: "center" | "start" | "end";
   area?: string;
-}
+};
 
 export const gridlayoutTextPanelInfo: UiComponentInfo<GridlayoutTextPanelProps> =
   {
