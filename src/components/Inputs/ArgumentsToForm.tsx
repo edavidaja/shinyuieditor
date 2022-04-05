@@ -1,6 +1,6 @@
 import type { UiSchema } from "@rjsf/core";
-import Form from "@rjsf/core";
-import type { JSONSchema7, JSONSchema7Type } from "json-schema";
+import JSONForm from "@rjsf/core";
+import type { JSONSchema7 } from "json-schema";
 import omit from "just-omit";
 
 import { CSSUnitInput } from "./CSSUnitInput";
@@ -24,6 +24,53 @@ export type UiNodeSettingsOptions<NodeSettings extends nameValuePair> = {
   [name in keyof NodeSettings]: argumentSchema<NodeSettings[name]>;
 };
 
+export default function ArgumentsToForm<NodeSettings extends nameValuePair>({
+  settings,
+  inputArgs,
+  onChange,
+  onSubmit,
+}: {
+  settings: nameValuePair;
+  inputArgs: UiNodeSettingsOptions<NodeSettings>;
+  onChange: (newSettings: NodeSettings) => void;
+  onSubmit: () => void;
+}) {
+  const formSchemas = inputArgsToSchemas(inputArgs);
+
+  const schema: JSONSchema7 = {
+    title: "Standin Name",
+    type: "object",
+    properties: formSchemas.schema,
+  };
+
+  return (
+    <JSONForm
+      formData={settings}
+      schema={schema}
+      uiSchema={formSchemas.uiSchema}
+      onChange={(form) => {
+        console.log("Form changed", form.formData);
+        // debugger;
+        onChange({ ...form.formData } as NodeSettings);
+      }}
+      onSubmit={() => onSubmit()}
+      onError={log("errors")}
+    />
+  );
+}
+
+function CustomWidth(props: any) {
+  const value = "100px";
+
+  return (
+    <CSSUnitInput
+      value={value}
+      onChange={props.onChange}
+      units={["px", "auto"]}
+    />
+  );
+}
+
 function inputArgsToSchemas<NodeSettings extends nameValuePair>(
   inputsArgs: UiNodeSettingsOptions<NodeSettings>
 ): {
@@ -45,40 +92,4 @@ function inputArgsToSchemas<NodeSettings extends nameValuePair>(
   }
 
   return { schema, uiSchema };
-}
-
-export default function ArgumentsToForm<NodeSettings extends nameValuePair>({
-  inputArgs,
-}: {
-  inputArgs: UiNodeSettingsOptions<NodeSettings>;
-}) {
-  const formSchemas = inputArgsToSchemas(inputArgs);
-
-  const schema: JSONSchema7 = {
-    title: "Standin Name",
-    type: "object",
-    properties: formSchemas.schema,
-  };
-
-  return (
-    <Form
-      schema={schema}
-      uiSchema={formSchemas.uiSchema}
-      onChange={log("changed")}
-      onSubmit={log("submitted")}
-      onError={log("errors")}
-    />
-  );
-}
-
-function CustomWidth(props: any) {
-  const value = "100px";
-
-  return (
-    <CSSUnitInput
-      value={value}
-      onChange={props.onChange}
-      units={["px", "auto"]}
-    />
-  );
 }

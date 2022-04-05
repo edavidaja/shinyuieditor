@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import type { UiNodeSettingsOptions } from "components/Inputs/ArgumentsToForm";
+import ArgumentsToForm from "components/Inputs/ArgumentsToForm";
 import Button from "components/Inputs/Button";
 import type {
   SettingsUpdaterComponent,
@@ -44,8 +46,8 @@ function useUpdateSettings({ tree }: { tree: ShinyUiNode }) {
   }, [tree, selectedPath]);
 
   const handleSubmit = React.useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+    async (e?: React.FormEvent<HTMLFormElement>) => {
+      e?.preventDefault();
 
       if (!currentNode || !selectedPath) return;
 
@@ -87,6 +89,7 @@ function useUpdateSettings({ tree }: { tree: ShinyUiNode }) {
   );
 
   const updateArguments = (newArguments: typeof tree.uiArguments) => {
+    console.log("Updating arguments", newArguments);
     setCurrentNode({
       ...currentNode,
       uiArguments: newArguments,
@@ -134,8 +137,13 @@ export function SettingsPanel({ tree }: { tree: ShinyUiNode }) {
 
   const { uiName, uiArguments } = currentNode;
 
-  const SettingsInputs = shinyUiNodeInfo[uiName]
-    .SettingsComponent as SettingsUpdaterComponent<typeof uiArguments>;
+  const nodeInfo = shinyUiNodeInfo[uiName];
+  type UiArguments = typeof uiArguments;
+  const SettingsInputs =
+    nodeInfo.SettingsComponent as SettingsUpdaterComponent<UiArguments>;
+
+  const settingsSchema =
+    nodeInfo.settingsSchema as UiNodeSettingsOptions<UiArguments>;
 
   return (
     <div className={classes.settingsPanel}>
@@ -150,15 +158,24 @@ export function SettingsPanel({ tree }: { tree: ShinyUiNode }) {
         </div>
       </div>
       <div className={classes.settingsForm}>
-        <form onSubmit={handleSubmit}>
-          <SettingsInputs settings={uiArguments} onChange={updateArguments} />
-          <ErrorMessageDisplay errorMsg={errorMsg} />
-          <div className={classes.submitHolder}>
-            <Button type="submit">
-              <BiCheck /> Update
-            </Button>
-          </div>
-        </form>
+        {settingsSchema ? (
+          <ArgumentsToForm
+            settings={uiArguments}
+            inputArgs={settingsSchema}
+            onChange={updateArguments}
+            onSubmit={handleSubmit}
+          />
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <SettingsInputs settings={uiArguments} onChange={updateArguments} />
+            <ErrorMessageDisplay errorMsg={errorMsg} />
+            <div className={classes.submitHolder}>
+              <Button type="submit">
+                <BiCheck /> Update
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
 
       {!isRootNode ? (

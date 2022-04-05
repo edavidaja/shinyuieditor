@@ -45,30 +45,6 @@ export const ShinyPlotOutputSettings: SettingsUpdaterComponent<
         value={outputId ?? "defaultPlotOutput"}
         onChange={(newName) => onChange({ ...settings, outputId: newName })}
       />
-      <ArgumentsToForm
-        inputArgs={{
-          outputID: {
-            type: "string",
-            default: "myPlot",
-          },
-          isACheck: {
-            type: "boolean",
-            default: true,
-            widget: CustomCheckbox,
-          },
-          width: {
-            type: "string",
-            title: "width",
-            default: "84px",
-            widget: CustomWidth,
-          },
-          height: {
-            type: "string",
-            title: "height",
-            default: "100%",
-          },
-        }}
-      />
     </>
   );
 };
