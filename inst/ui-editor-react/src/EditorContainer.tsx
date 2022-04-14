@@ -13,6 +13,7 @@ import { sendUiStateToBackend } from "state/sendUiStateToBackend";
 import type { RootState } from "state/store";
 import { backupUiTree, INIT_STATE } from "state/uiTree";
 
+import { AppTour } from "./AppTour";
 import { UndoRedoButtons } from "./components/UndoRedoButtons";
 import classes from "./EditorContainer.module.css";
 import { SettingsPanel } from "./SettingsPanel/SettingsPanel";
@@ -50,9 +51,12 @@ function EditorContainerWithData({
               alt="Shiny Logo"
             />
           </div>
+          <AppTour />
           <UndoRedoButtons />
         </div>
-        <div className={`${classes.elementsPanel} ${classes.titledPanel}`}>
+        <div
+          className={`${classes.elementsPanel} ${classes.titledPanel} elements-panel`}
+        >
           <h3>Elements</h3>
           <ElementsPalette />
         </div>
