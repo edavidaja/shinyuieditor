@@ -60,13 +60,17 @@ function EditorContainerWithData({
           <h3>Elements</h3>
           <ElementsPalette />
         </div>
-        <div className={classes.editorHolder}>
+        <div className={classes.editorHolder + " app-view"}>
           <UiNode {...tree} />
         </div>
-        <div className={`${classes.propertiesPanel} ${classes.titledPanel}`}>
-          <h3>Properties</h3>
-          <SettingsPanel tree={tree} />
-          <AppPreview />
+        <div className={`${classes.propertiesPanel}`}>
+          <div className={`${classes.titledPanel} properties-panel`}>
+            <h3>Properties</h3>
+            <SettingsPanel tree={tree} />
+          </div>
+          <div className={`${classes.titledPanel} app-preview`}>
+            <AppPreview />
+          </div>
         </div>
       </div>
     </CurrentDraggedNodeProvider>
