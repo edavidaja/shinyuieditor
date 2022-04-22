@@ -1,19 +1,23 @@
 
 
-# TODO: Return object that has events that can be subscribed to attached to it
-# Use the callbacks class from Shiny
-start_background_shiny_app <- function(app_loc, host, port,show_logs, show_preview_app_logs) {
-  cat("Starting up background shiny app")
-  p <- callr::r_bg(
-    func = function(app_loc, host, port) {
-      # Turn on live-reload and dev mode
-      # shiny::devmode(TRUE)
-      options(shiny.autoreload = TRUE)
-      shiny::runApp(app_loc, port = port, host = host)
-    },
-    args = list(app_loc, host, port),
-    supervise = TRUE # Extra security for process being cleaned up properly
-  )
+start_background_shiny_app <- function(app_loc, host, port, writeLog, show_preview_app_logs) {
+
+  start_app <- function(){
+    writeLog("Starting up background shiny app")
+    p <- callr::r_bg(
+      func = function(app_loc, host, port) {
+        # Turn on live-reload and dev mode
+        # shiny::devmode(TRUE)
+        options(shiny.autoreload = TRUE)
+        shiny::runApp(app_loc, port = port, host = host)
+      },
+      args = list(app_loc, host, port),
+      supervise = TRUE # Extra security for process being cleaned up properly
+    )
+    writeLog("Started Shiny preview app: ", crayon::red("App PID:", p$get_pid()))
+    p
+  }
+  p <- start_app()
 
   path_to_app <- if (host == "0.0.0.0") {
     # Don't use 0.0.0.0 directly as browsers don't give it a free pass for lack
@@ -22,6 +26,7 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
   } else {
     host
   }
+
   app_url <- paste0("http://", path_to_app, ":", port)
 
   # Listens for the app to be ready for connections
@@ -39,10 +44,6 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
     }
   )
 
-  if (show_preview_app_logs) {
-    on_log$subscribe(log_background_app)
-  }
-
   on_crash <- create_output_subscribers(
     source_fn = p$is_alive,
     filter_fn = function(alive){
@@ -51,16 +52,15 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
     delay = 1
   )
 
-  status <- create_output_subscribers(
-    source_fn = p$is_alive,
-    delay = 1
-  )
+  if (show_preview_app_logs) {
+    on_log$subscribe(log_background_app)
+  }
 
   stop_listeners <- function(){
-    on_log$stop_listening()
-    on_crash$stop_listening()
-    on_ready$stop_listening()
-    status$stop_listening()
+    writeLog("Stopping listeners\n")
+    on_log$cancel_all()
+    on_crash$cancel_all()
+    on_ready$cancel_all()
   }
 
   cleanup <-  function(){
@@ -71,12 +71,12 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
   stop_app <- function(){
     tryCatch(
       {
-        if (show_logs) cat("=> Shutting down running shiny app...\n")
+        writeLog("=> Shutting down running shiny app...")
         # tools::SIGINT = 2
-        p$signal(3L)
+        p$signal(2L)
       },
       error = function(e) {
-        print("Error shutting down background Shiny app:")
+        writeLog("Error shutting down background Shiny app:")
         print(e)
       }
     )
@@ -84,16 +84,17 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
 
   restart <- function(){
 
-    stop_app()
-    # browser()
+    writeLog("Restarting app...\n\n")
+    p <<- start_app()
+    on_log <<- on_log$update_subscribed(p$read_error_lines)
+    on_crash <<- on_crash$update_subscribed(p$is_alive)
   }
 
   list(
     url = app_url,
-    on_ready = on_ready,
-    on_log = on_log,
-    on_crash = on_crash,
-    status = status,
+    on_ready = on_ready$subscribe,
+    on_log = on_log$subscribe,
+    on_crash = on_crash$subscribe,
     cleanup = cleanup,
     restart = restart
   )
@@ -138,15 +139,18 @@ start_background_shiny_app <- function(app_loc, host, port,show_logs, show_previ
 #' popcorn()
 #'
 #' # stop listening entirely
-#' clock$stop_listening()
+#' clock$cancel_all()
 #'
 create_output_subscribers <- function(
   source_fn,
   filter_fn = function(...) TRUE,
-  delay = 0.1
+  delay = 0.1,
+  callbacks = shiny:::Callbacks$new()
 ){
 
-  callbacks <- shiny:::Callbacks$new()
+  # callbacks <- shiny:::Callbacks$new()
+
+  subscribed_fn <- source_fn
 
   unsubscribe <- NULL
 
@@ -160,14 +164,14 @@ create_output_subscribers <- function(
 
     tryCatch(
       {
-        out <- source_fn()
+        out <- subscribed_fn()
 
         if(filter_fn(out)) {
           callbacks$invoke(out)
         }
       },
       error = function(e) {
-        print("Error in subscription, unsubscribing")
+        cat(crayon::red("Error in subscription, unsubscribing\n"))
         print(e)
         had_error <<- TRUE
       }
@@ -177,15 +181,32 @@ create_output_subscribers <- function(
   # Kick off loop
   poll()
 
-  stop_listening <- function(){
+  cancel_all <- function(){
     if(!is.null(unsubscribe)) {
       unsubscribe()
     }
   }
 
+  update_subscribed <- function(new_fn){
+
+    # Cancel the current event loop for the subscribed function
+    cancel_all()
+
+    # Create a new output subscribers result that carries over all the same
+    # callback subscriptions with it
+    create_output_subscribers(
+      source_fn = new_fn,
+      filter_fn = filter_fn,
+      delay = delay,
+      callbacks = callbacks
+    )
+  }
+
   list(
     subscribe = callbacks$register,
-    stop_listening = stop_listening
+    cancel_all = cancel_all,
+    update_subscribed = update_subscribed,
+    callbacks = callbacks
   )
 }
 
