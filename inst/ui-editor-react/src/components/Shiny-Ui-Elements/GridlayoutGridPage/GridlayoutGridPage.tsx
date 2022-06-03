@@ -15,14 +15,14 @@ import { UPDATE_NODE, usePlaceNode } from "state/uiTree";
 import { enumerateGridDims, toStringLoc } from "utils/grid-helpers";
 import { areasToItemLocations } from "utils/gridTemplates/itemLocations";
 import parseGridTemplateAreas from "utils/gridTemplates/parseGridTemplateAreas";
-import type {
-  GridItemExtent,
-  TemplatedGridProps,
-} from "utils/gridTemplates/types";
+import type { GridItemExtent } from "utils/gridTemplates/types";
 
 import type { GridAwareNodes } from "../GridLayoutPanelHelpers/EmptyPanelMessage/gridAwareNodes";
 import { gridAwareNodes } from "../GridLayoutPanelHelpers/EmptyPanelMessage/gridAwareNodes";
 
+import type { TemplatedGridProps } from ".";
+
+import EditableGridContainer from "./EditableGridContainer";
 import type { GridLayoutAction } from "./gridLayoutReducer";
 import { gridLayoutReducer } from "./gridLayoutReducer";
 import { NameNewPanelModal } from "./NameNewPanelModal";
@@ -39,7 +39,7 @@ export const LayoutDispatchContext =
 export const GridlayoutGridPage: UiContainerNodeComponent<
   TemplatedGridProps
 > = ({
-  uiArguments,
+  uiArguments: layoutDef,
   uiChildren,
   children,
   eventHandlers,
@@ -51,10 +51,10 @@ export const GridlayoutGridPage: UiContainerNodeComponent<
 
   const { onClick } = eventHandlers;
 
-  const { areas } = uiArguments;
+  const { areas } = layoutDef;
 
-  const { numRows, numCols, styles, sizes, uniqueAreas } =
-    parseGridTemplateAreas(uiArguments);
+  const { numRows, numCols, sizes, uniqueAreas } =
+    parseGridTemplateAreas(layoutDef);
 
   const gridCellLocations: CellLocRef = React.useRef({});
   const itemGridLocations = React.useMemo(
@@ -85,6 +85,21 @@ export const GridlayoutGridPage: UiContainerNodeComponent<
     setShowModal(nodeInfo);
   };
 
+  const updateLayout = React.useCallback(
+    (newLayout: TemplatedGridProps) => {
+      dispatch(
+        UPDATE_NODE({
+          path: [],
+          node: {
+            uiName: "gridlayout::grid_page",
+            uiArguments: newLayout,
+          },
+        })
+      );
+    },
+    [dispatch]
+  );
+
   const handleLayoutUpdate = React.useCallback(
     (action: GridLayoutAction) => {
       dispatch(
@@ -92,12 +107,12 @@ export const GridlayoutGridPage: UiContainerNodeComponent<
           path: [],
           node: {
             uiName: "gridlayout::grid_page",
-            uiArguments: gridLayoutReducer(uiArguments, action),
+            uiArguments: gridLayoutReducer(layoutDef, action),
           },
         })
       );
     },
-    [dispatch, uiArguments]
+    [dispatch, layoutDef]
   );
 
   const areaOverlays = uniqueAreas.map((area) => (
@@ -114,10 +129,10 @@ export const GridlayoutGridPage: UiContainerNodeComponent<
   ));
 
   const stylesForGrid = {
-    ...styles,
-    "--gap": uiArguments.gapSize,
+    "--gap": layoutDef.gapSize,
     "--row-gutter": "150px",
     "--col-gutter": "100px",
+    "--pad": "8px",
   } as React.CSSProperties;
 
   const addNewGridItem = React.useCallback(
@@ -173,30 +188,32 @@ export const GridlayoutGridPage: UiContainerNodeComponent<
         draggable={false}
         onDragStart={() => {}}
       >
-        {enumerateGridDims({
-          numRows,
-          numCols,
-        }).map(({ row, col }) => (
-          <GridCell
-            key={toStringLoc({ row, col })}
-            gridRow={row}
-            gridColumn={col}
-            cellLocations={gridCellLocations}
-            onDroppedNode={handleNodeDrop}
-            containerPath={nodeInfo.path}
-          />
-        ))}
+        <EditableGridContainer {...layoutDef} onNewLayout={updateLayout}>
+          {enumerateGridDims({
+            numRows,
+            numCols,
+          }).map(({ row, col }) => (
+            <GridCell
+              key={toStringLoc({ row, col })}
+              gridRow={row}
+              gridColumn={col}
+              cellLocations={gridCellLocations}
+              onDroppedNode={handleNodeDrop}
+              containerPath={nodeInfo.path}
+            />
+          ))}
 
-        <TractControls areas={areas} sizes={sizes} />
-        {uiChildren?.map((childNode, i) => (
-          <UiNode
-            key={nodeInfo.path.join(".") + i}
-            path={[...nodeInfo.path, i]}
-            {...childNode}
-          />
-        ))}
-        {children}
-        {areaOverlays}
+          {/* <TractControls areas={areas} sizes={sizes} /> */}
+          {uiChildren?.map((childNode, i) => (
+            <UiNode
+              key={nodeInfo.path.join(".") + i}
+              path={[...nodeInfo.path, i]}
+              {...childNode}
+            />
+          ))}
+          {children}
+          {areaOverlays}
+        </EditableGridContainer>
       </div>
       {showModal ? (
         <NameNewPanelModal
